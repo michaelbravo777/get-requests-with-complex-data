@@ -1,9 +1,12 @@
 'use strict';
 
-// put your own value below!
-const apiKey = 'AIzaSyCJtZscHdAeGV5cYzU7jRnN3fe4a4PzHO0'; 
-const searchURL = 'https://www.googleapis.com/youtube/v3/search';
+const states = {AL:"Alabama",AK:"Alaska",AS:"American Samoa",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",DC:"District Of Columbia",FM:"Federated States Of Micronesia",FL:"Florida",GA:"Georgia",GU: "Guam",HI:"Hawaii", ID:"Idaho",IL:"Illinois",IN:"Indiana",IA: "Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MH:"Marshall Islands",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",MP:"Northern Mariana Islands",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PW:"Palau",PA:"Pennsylvania",PR:"Puerto Rico",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VI:"Virgin Islands",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming"}
+const STORE = {
+  stateSelected: ""
+}
 
+const apiKey = 'TVTdAb5hfTZMmnxVHHeJpk1a6Vih1l1uv4vovpdU'; 
+const searchURL = 'https://developer.nps.gov/api/v1/parks?';
 
 function formatQueryParams(params) {
   const queryItems = Object.keys(params)
@@ -12,37 +15,36 @@ function formatQueryParams(params) {
 }
 
 function displayResults(responseJson) {
-  // if there are previous results, remove them
-  console.log(responseJson);
   $('#results-list').empty();
-  // iterate through the items array
-  for (let i = 0; i < responseJson.items.length; i++){
-    // for each video object in the items 
-    //array, add a list item to the results 
-    //list with the video title, description,
-    //and thumbnail
+  for (let i = 0; i < responseJson.data.length; i++){
     $('#results-list').append(
-      `<li><h3>${responseJson.items[i].snippet.title}</h3>
-      <p>${responseJson.items[i].snippet.description}</p>
-      <img src='${responseJson.items[i].snippet.thumbnails.default.url}'>
-      </li>`
-    )};
-  //display the results section  
+      `<li>${responseJson.data[i].name}</li>
+       <li>${responseJson.data[i].description}</li>
+       <li>${responseJson.data[i].url}</li>
+       <p>`
+    );
+  }
   $('#results').removeClass('hidden');
-};
+}
 
-function getYouTubeVideos(query, maxResults=10) {
-  const params = {
-    key: apiKey,
-    q: query,
-    part: 'snippet',
-    maxResults,
-    type: 'video'
+function createStateList() {
+  let value = '';
+  for (let i in states) {
+    value += `<option value=${i}>${states[i]}</option>`;
+  }
+  $('#state-selector').html(value);
+}
+
+// function getParks(query, maxResults=10) {
+function getParks(maxResults=10) {
+    const params = {
+    // q: query,
+    limit: maxResults,
+    stateCode: STORE.stateSelected,
+    api_key: apiKey
   };
   const queryString = formatQueryParams(params)
   const url = searchURL + '?' + queryString;
-
-  console.log(url);
 
   fetch(url)
     .then(response => {
@@ -60,16 +62,17 @@ function getYouTubeVideos(query, maxResults=10) {
 function watchForm() {
   $('form').submit(event => {
     event.preventDefault();
-    const searchTerm = $('#js-search-term').val();
-    const maxResults = $('#js-max-results').val();
-    getYouTubeVideos(searchTerm, maxResults);
+    // const searchTerm = $('#js-search-term').val();
+    const maxResults = $('#js-max-results').val() - 1;
+    STORE.stateSelected = $('#state-selector option:selected').val();
+    // getParks(searchTerm, maxResults);
+    getParks(maxResults);
   });
 }
 
-$(watchForm);
-fetch('https://developer.nps.gov/api/v1/parks?parkCode=&stateCode=ca&api_key=TVTdAb5hfTZMmnxVHHeJpk1a6Vih1l1uv4vovpdU')
-  .then(response => response.json())
+// $(watchForm);
 
-  .then(responseJson => {
-    console.log(responseJson);
-  })
+$(() => {
+  createStateList();
+  watchForm();
+});
